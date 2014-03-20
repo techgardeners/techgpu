@@ -1,0 +1,24 @@
+{
+    "name": "techgardeners/TechGPU",
+    "type": "PHP Utility",
+    "description": "Misc PHP Utility",
+    "keywords": ["techg", "misc", "utility"],
+    "homepage": "https://github.com/techgardeners/techgpu",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "TechGardeners",
+            "email": "roberto@beccaceci.it"
+        }
+    ],
+    "minimum-stability": "dev",	
+    "require": {
+        "php": ">=5.3.3"
+    },
+    "require-dev": {
+    },    
+    "autoload": {
+        "psr-0": { "TechG\\TechGPU": "src/" }
+    },   
+    "target-dir": "TechG/TechGPU"
+}

@@ -1,0 +1,16 @@
+{
+    "packages": {
+        "name": "techgardeners/TechGPU",
+        "dist": {
+          "url": "https://github.com/techgardeners/techgpu.git",
+          "type": "zip"
+},
+
+"source": {
+            "url": "https://github.com/techgardeners/techgpu.git",
+            "type": "git",
+            "reference": ""
+
+        }
+    }
+}
