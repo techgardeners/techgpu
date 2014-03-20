@@ -1,6 +1,6 @@
 <?php
 
-namespace \TechG\TechGPU;
+namespace \TechG\TechGPU\DateTime;
 
 
 class TgPUDataTime
