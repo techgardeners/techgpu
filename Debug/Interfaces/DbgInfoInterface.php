@@ -22,17 +22,24 @@ abstract class DbgInfoInterface
     public $value;
 
     public function __construct()
-    {
-        
+    {        
         $this->value = new DbgInfoArrayItem();
     }    
     
     public function __toString(){
         return (string) $this->render();
-    }    
+    }   
+    
+    public function add($name, $value)
+    {
+        
+        $this->value->add($name, $value);
+        
+        return $this;
+    }     
     
     public abstract function render();
     
-    public function renderRaw( ) { return var_dump($this); }
+    public function renderRaw() { return var_dump($this); }
     
 }

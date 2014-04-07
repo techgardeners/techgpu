@@ -73,7 +73,8 @@ class DbgInfoArrayItem extends DbgInfoItem implements \IteratorAggregate, \Array
 // *********************************************************************************    
 // *********************************************************************************    
     
-    public function getIterator() {
+    public function getIterator() 
+    {
         
         $objArray = array();
         foreach ($this->value as $item) {
@@ -83,20 +84,24 @@ class DbgInfoArrayItem extends DbgInfoItem implements \IteratorAggregate, \Array
         return new \ArrayIterator($objArray);
     }    
      
-    public function offsetSet($offset, $value) {
+    public function offsetSet($offset, $value)
+    {
         if (is_null($offset)) {
             $this->value[] = $value;
         } else {
             $this->value[$offset] = $value;
         }
     }
-    public function offsetExists($offset) {
+    public function offsetExists($offset) 
+    {
         return isset($this->value[$offset]);
     }
-    public function offsetUnset($offset) {
+    public function offsetUnset($offset) 
+    {
         unset($this->value[$offset]);
     }
-    public function offsetGet($offset) {
+    public function offsetGet($offset) 
+    {
         return isset($this->value[$offset]) ? $this->value[$offset] : null;
     }    
     

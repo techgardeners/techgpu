@@ -40,7 +40,6 @@ class DbgInfoQuery extends DbgInfoInterface
             // Contiene i dati dei risultati (num risultati, paginazione, etc..)
             $resultInfoArray = array(
                 'result_num' => new DbgInfoItem('records', 0, DbgInfoItem::TYPE_NUMERIC),
-                'field_num' => new DbgInfoItem('fields', 0, DbgInfoItem::TYPE_NUMERIC),
             );
 
         $this->value->add('exec_info', new DbgInfoArrayItem('Execution result info', $resultInfoArray, array('render_type' => 'list')));
@@ -61,7 +60,7 @@ class DbgInfoQuery extends DbgInfoInterface
                 'memory_usage' => new DbgInfoItem('exec_mem', ($timeEvent) ? $timeEvent->getMemory() : 0, DbgInfoItem::TYPE_MEMSIZE),
             );
 
-        return $this->value->add('system_info', new DbgInfoArrayItem('System usage info', $timeInfoArray, array('render_type' => 'list')));        
+        return $this->add('system_info', new DbgInfoArrayItem('System usage info', $timeInfoArray, array('render_type' => 'list')));        
     }
     
     public function addErrorInfo($conn = null) {
@@ -75,7 +74,7 @@ class DbgInfoQuery extends DbgInfoInterface
                 'error_sqlstate' => new DbgInfoItem('error_sqlstate', $conn->sqlstate, DbgInfoItem::TYPE_NUMERIC),
             );
             
-            $this->value->add('error_info', new DbgInfoArrayItem('Execution error info', $errorInfoArray, array('render_type' => 'list')));
+            $this->add('error_info', new DbgInfoArrayItem('Execution error info', $errorInfoArray, array('render_type' => 'list')));
             
         }         
         
@@ -92,7 +91,7 @@ class DbgInfoQuery extends DbgInfoInterface
             'warning' => new DbgInfoItem('warning', $conn->warning_count, DbgInfoItem::TYPE_STRING),
         );
             
-        $this->value->add('version_info', new DbgInfoArrayItem('Mysql info', $mysqlInfoArray, array('render_type' => 'list')));
+        $this->add('version_info', new DbgInfoArrayItem('Mysql info', $mysqlInfoArray, array('render_type' => 'list')));
 
         return $this;        
     }
@@ -108,7 +107,7 @@ class DbgInfoQuery extends DbgInfoInterface
             'field_info' => new DbgInfoArrayItem('Fields', array(), array('render_type' => 'list')),
         );
             
-        $this->value->add('fields_info', new DbgInfoArrayItem('Fields info', $fieldsInfoArray, array('render_type' => 'list')));
+        $this->add('fields_info', new DbgInfoArrayItem('Fields info', $fieldsInfoArray, array('render_type' => 'list')));
         
         
         foreach ($fields as $field) {
@@ -132,7 +131,7 @@ class DbgInfoQuery extends DbgInfoInterface
     public function addSubQuery($name, $subQueryItem) {
         
         if (!is_object($this->value['sub_querys'])) {
-            $this->value->add('sub_querys', new DbgInfoArrayItem('Sub Querys info', array(), array('render_type' => 'list')));    
+            $this->add('sub_querys', new DbgInfoArrayItem('Sub Querys info', array(), array('render_type' => 'list')));    
         }
         
         $this->value['sub_querys']->add($name, $subQueryItem);

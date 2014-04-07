@@ -62,12 +62,12 @@ class TgMysqlUti
         $filterClause = self::getFilterClause($filterClauses);         
         $orderClause = self::getOrderClause($orderClauses);         
         
-        // se è limitato, devo sapere quante sarebbero state se non fosse stato limitato
-        $mainQuery = (($limitClause) ? preg_replace('/^SELECT/', 'SELECT SQL_CALC_FOUND_ROWS', $sql) : $sql).$filterClause.$orderClause.$limitClause;
+        $mainQuery = $sql.$filterClause.$orderClause.$limitClause;
         
         $mainQRes = self::executeQuery($conn, $mainQuery, $extendedInfo, $parameters);
 
-        if ($extendedInfo) {
+        // Aggiungo le info sulla paginazione
+        if ($extendedInfo && $page && $page_size) {
             $extendedInfo->value['exec_info']->add('page', new DbgInfoItem('page', $page, DbgInfoItem::TYPE_NUMERIC));
             $extendedInfo->value['exec_info']->add('page_size', new DbgInfoItem('page_size', $page_size, DbgInfoItem::TYPE_NUMERIC));
         }
@@ -75,9 +75,11 @@ class TgMysqlUti
         
         if ($mainQRes && $limitClause) {
             
+            $countQuery = preg_replace('/^SELECT .* FROM/i', 'SELECT count(*) FROM', $sql);
+            
             if ($filterClause) {
                 $fq_info = ($extendedInfo) ? array() : null;
-                $fq_res = self::executeQuery($conn, 'SELECT FOUND_ROWS()', $fq_info, $parameters);
+                $fq_res = self::executeQuery($conn, $countQuery.$filterClause, $fq_info, $parameters);
                 
                 if ($fq_res) {
                     $fq_res = $fq_res->fetch_array(MYSQL_NUM);
@@ -92,7 +94,7 @@ class TgMysqlUti
             }
 
             $tq_info = ($extendedInfo) ? array() : null;
-            $tq_res = self::executeQuery($conn, preg_replace('/^SELECT .* FROM/', 'SELECT count(*) FROM', $sql), $tq_info, $parameters);
+            $tq_res = self::executeQuery($conn, $countQuery, $tq_info, $parameters);
             
             if ($tq_res) {
                 $tq_res = $tq_res->fetch_array(MYSQL_NUM);
@@ -110,7 +112,7 @@ class TgMysqlUti
        
        $extendedInfo->addTimeEventInfo($event);
           
-       return $res;            
+       return $mainQRes;            
         
     }
     
