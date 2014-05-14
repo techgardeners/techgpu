@@ -29,7 +29,7 @@ class TgMysqlUti
     * @param mixed $parameters
     * @return DbgInfoQuery
     */
-    public static function executeQuery($conn, $sql, &$extendedInfo = null, array $parameters = array())
+    public static function executeQuery($conn, $sql, &$extendedInfo = null, $parameters = array())
     {
         
         // If not set, execeuted faster then possible
@@ -50,7 +50,7 @@ class TgMysqlUti
     }    
     
     
-    public static function executePaginatedQuery($conn, $sql, $page_size = null, $page = null, $filterClauses = null, $orderClauses = null, &$extendedInfo = null, array $parameters = array())
+    public static function executePaginatedQuery($conn, $sql, $page_size = null, $page = 1, $filterClauses = null, $orderClauses = null, &$extendedInfo = null, $parameters = array())
     {
 
         $stopwatch = new Stopwatch();
@@ -65,10 +65,13 @@ class TgMysqlUti
         $mainQuery = $sql.$filterClause.$orderClause.$limitClause;
         
         $mainQRes = self::executeQuery($conn, $mainQuery, $extendedInfo, $parameters);
+        $returned_rows = ($mainQRes) ? $mainQRes->num_rows : 0;
 
         // Aggiungo le info sulla paginazione
-        if ($extendedInfo && $page && $page_size) {
-            $extendedInfo->value['exec_info']->add('page', new DbgInfoItem('page', $page, DbgInfoItem::TYPE_NUMERIC));
+        if ($extendedInfo) {
+            $extendedInfo->value['exec_info']->add('returned_rows', new DbgInfoItem('returned_rows', $returned_rows, DbgInfoItem::TYPE_NUMERIC));
+            $extendedInfo->value['exec_info']->add('page', new DbgInfoItem('page', ($returned_rows > 0) ? $page : 0, DbgInfoItem::TYPE_NUMERIC));
+            $extendedInfo->value['exec_info']->add('page_size', new DbgInfoItem('page_size', $page_size, DbgInfoItem::TYPE_NUMERIC));
             $extendedInfo->value['exec_info']->add('page_size', new DbgInfoItem('page_size', $page_size, DbgInfoItem::TYPE_NUMERIC));
         }
         
@@ -101,12 +104,30 @@ class TgMysqlUti
                 $tq_res = $tq_res[0];
             }
 
+            $paginated_records = (($filterClause) ? $fq_res : $tq_res);
+            
             if ($extendedInfo) {
                 $extendedInfo->addSubQuery('count_total_record', $tq_info);
-                $extendedInfo->value['exec_info']->add('total_records', new DbgInfoItem('total_records', $tq_res , DbgInfoItem::TYPE_NUMERIC));    
-            }            
+                $extendedInfo->value['exec_info']->add('total_table_records', new DbgInfoItem('total_table_records', $tq_res , DbgInfoItem::TYPE_NUMERIC));    
+            }
+                        
             
+        } else {
+
+            $paginated_records = $returned_rows;
+
+            if ($extendedInfo) {
+                $extendedInfo->value['exec_info']->add('total_table_records', new DbgInfoItem('total_table_records', $returned_rows , DbgInfoItem::TYPE_NUMERIC));    
+            }             
+
         }
+        
+        $tot_page = ($page_size) ? ((int)($paginated_records / $page_size)) + (($paginated_records % $page_size > 0) ? 1 : 0) : 1;
+        
+        if ($extendedInfo) {
+            $extendedInfo->value['exec_info']->add('tot_page', new DbgInfoItem('page_size', $tot_page, DbgInfoItem::TYPE_NUMERIC));
+        }
+
         
        $event = $stopwatch->stop('executePaginatedQuery');
        
@@ -144,12 +165,13 @@ class TgMysqlUti
         return $limitClause;       
     }
         
-    public static function getPaginatedLimitClause($page_size=null, $page=0)
+    public static function getPaginatedLimitClause($page_size=null, $page=1)
     {
         
         if ( isset( $page_size ) ) {
 
-            return self::getLimitClause($page_size*$page, $page_size);             
+            $page = ($page && $page > 0) ? $page : 1;
+            return self::getLimitClause($page_size*($page-1), $page_size);             
         }
         
         return '';

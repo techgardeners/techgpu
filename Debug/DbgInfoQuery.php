@@ -39,7 +39,7 @@ class DbgInfoQuery extends DbgInfoInterface
         
             // Contiene i dati dei risultati (num risultati, paginazione, etc..)
             $resultInfoArray = array(
-                'result_num' => new DbgInfoItem('records', 0, DbgInfoItem::TYPE_NUMERIC),
+                'affected_rows' => new DbgInfoItem('affected_rows', 0, DbgInfoItem::TYPE_NUMERIC),
             );
 
         $this->value->add('exec_info', new DbgInfoArrayItem('Execution result info', $resultInfoArray, array('render_type' => 'list')));
@@ -83,7 +83,7 @@ class DbgInfoQuery extends DbgInfoInterface
 
         if (!$conn) return $this;
 
-        $this->value['exec_info']['result_num']->value = $conn->affected_rows;
+        $this->value['exec_info']['affected_rows']->value = $conn->affected_rows;
 
         $mysqlInfoArray = array(
             'client_info' => new DbgInfoItem('client_version', $conn->client_info, DbgInfoItem::TYPE_STRING),
@@ -149,6 +149,36 @@ class DbgInfoQuery extends DbgInfoInterface
         return $this->value->renderValue();
     
     }
+    
+    public function getArrayValue() {
+     
+     $ret = array();
+     
+     $ret['exec_info']['sql'] = $this->value->value['sql']->value;
+     $ret['exec_info']['affected_rows'] = $this->value->value['exec_info']['affected_rows']->value;
+     $ret['exec_info']['returned_rows'] = $this->value->value['exec_info']['returned_rows']->value;
+     $ret['exec_info']['filtered_records'] = (array_key_exists('filtered_records',$this->value->value['exec_info'])) ? $this->value->value['exec_info']['filtered_records']->value : null;
+     $ret['exec_info']['total_table_records'] = $this->value->value['exec_info']['total_table_records']->value;
+     $ret['exec_info']['page'] = $this->value->value['exec_info']['page']->value;
+     $ret['exec_info']['page_size'] = $this->value->value['exec_info']['page_size']->value;
+     $ret['exec_info']['tot_page'] = $this->value->value['exec_info']['tot_page']->value;
+     
+     $ret['system_info']['exec_time'] = $this->value->value['system_info']['exec_time']->value;
+     $ret['system_info']['memory_usage'] = $this->value->value['system_info']['memory_usage']->value;
+     
+     $ret['version_info']['client_info'] = $this->value->value['version_info']['client_info']->value;
+     $ret['version_info']['server_info'] = $this->value->value['version_info']['server_info']->value;
+     $ret['version_info']['warning'] = $this->value->value['version_info']['warning']->value;
+
+     $ret['error_info']['error_no'] = (array_key_exists('error_info',$this->value->value)) ? $this->value->value['error_info']['error_no']->value : null;
+     $ret['error_info']['error_msg'] = (array_key_exists('error_info',$this->value->value)) ? $this->value->value['error_info']['error_msg']->value : null;
+     $ret['error_info']['error_sqlstate'] = (array_key_exists('error_info',$this->value->value)) ? $this->value->value['error_info']['error_sqlstate']->value : null;
+
+     return $ret;
+        
+    }
+    
+    
 
     
 }

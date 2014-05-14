@@ -67,8 +67,8 @@ class TgParameterBag extends ParameterBag
      * @api
      */
     public function replace(array $parameters = array(), $path = self::KEYSEPARATOR, $sep = self::KEYSEPARATOR)
-    {
-        return $this->set($path, $parameters, $sep);       
+    {        
+        $this->set($path, $parameters, $sep);       
     }
 
     /**
@@ -84,10 +84,12 @@ class TgParameterBag extends ParameterBag
         if ($this->has($path)) {
             
             $arrKeys = $this->convertPathToArrayStyle($path, $sep);
-            eval('$parameters = array_replace($this->parameters'.$arrKeys.', $parameters);');    
+            eval('$parameters = array_replace_recursive($this->parameters'.$arrKeys.', $parameters);');    
         } 
         
-        $this->set($path, $parameters, $sep);        
+        $this->set($path, $parameters, $sep);
+        
+        return $this;        
     }
 
     /**
