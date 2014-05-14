@@ -26,6 +26,8 @@ class TgParameterBag extends ParameterBag
     const KEYSEPARATOR = '/';
     const DEEP_LEAF = 0;
     const DEEP_PARENT = 1;
+    
+    const ENCODE_JSON = 'json';
 
 
     // TODO: Convert to protected (need to manage tests issue)
@@ -128,6 +130,24 @@ class TgParameterBag extends ParameterBag
     public function getParent($path, $default = null, $sep = self::KEYSEPARATOR)
     {
         return $this->get($path, $default, true, $sep, self::DEEP_PARENT);   
+    }
+    
+    public function getEncoded($encodeType = self::ENCODE_JSON, $path=null, $default = null, $deep = true, $sep = self::KEYSEPARATOR)
+    {
+        $rawValue = $this->get($path, $default, $deep, $sep);
+        
+        switch ($encodeType) {
+            case self::ENCODE_JSON: {
+                            
+                            $value = json_encode($rawValue);
+                            break;
+            }
+                        
+            default:
+                $value = $rawValue;     
+        }
+        
+        return $value;
     }
     
     public function get($path, $default = null, $deep = true, $sep = self::KEYSEPARATOR, $deepLevel = self::DEEP_LEAF)

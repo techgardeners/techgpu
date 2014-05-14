@@ -12,13 +12,16 @@ namespace TechG\TechGPU\OOP\Base;
 
 use TechG\TechGPU\OOP\Interfaces\BaseObjectConfInterfaces;
 use TechG\TechGPU\OOP\Interfaces\BaseObjectDependenciesInterfaces;
+use TechG\TechGPU\OOP\Interfaces\BaseObjectTimeableInterfaces;
 
 use TechG\TechGPU\Misc\TgParameterBag;
+
+use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
 * 
 */
-class BaseObject implements BaseObjectConfInterfaces, BaseObjectDependenciesInterfaces 
+class BaseObject implements BaseObjectConfInterfaces, BaseObjectDependenciesInterfaces, BaseObjectTimeableInterfaces 
 {      
     /**
      * Parameters storage.
@@ -27,6 +30,8 @@ class BaseObject implements BaseObjectConfInterfaces, BaseObjectDependenciesInte
      */
     protected $objParams;
     protected $dependenciesInfo;
+    
+    protected $watch;
     
     function __construct($parameters=array(), $dependencies=array())
     {        
@@ -38,8 +43,12 @@ class BaseObject implements BaseObjectConfInterfaces, BaseObjectDependenciesInte
         // Set dependencies  
         $this->buildDependenciesInfo();        
         $this->initDependencies($dependencies);
+
+        $this->watch->start('init'.get_class($this) , 'core');
+
+        $this->init(); 
         
-        $this->init();        
+        $this->watch->stop('init'.get_class($this));                           
     }
 
 // ****************************************************************************************************    
@@ -60,6 +69,14 @@ class BaseObject implements BaseObjectConfInterfaces, BaseObjectDependenciesInte
             
         }               
     }
+
+        protected function _initWatch($watch=null, $parameters=array())
+        {
+            
+            if ($watch) { $this->watch = $watch; }
+            if (!$this->watch) { $this->watch = new Stopwatch(); }
+         
+        }    
             
 // ****************************************************************************************************    
 // Methods for childrens overrides
@@ -73,7 +90,13 @@ class BaseObject implements BaseObjectConfInterfaces, BaseObjectDependenciesInte
     }   
 
     protected function buildDependenciesInfo() 
-    {           
+    {  
+        $this->addDependencyInfo(self::DEP_WATCH, array(
+                                                        self::DP_INFO_PROPERTY => 'watch',
+                                                        self::DP_INFO_REQUIRED => false,        
+                                                        self::DP_INFO_INIT_FUNC => '_initWatch',
+                                                        ));    
+             
     } 
         
     protected function init()
@@ -102,6 +125,20 @@ class BaseObject implements BaseObjectConfInterfaces, BaseObjectDependenciesInte
         $this->objParams->add($parameters);
     }    
 
+// ****************************************************************************************************    
+// Implementation of BaseObjectTimeableInterfaces    
+// ****************************************************************************************************    
+
+    public function getStopwatch($parameters=array())
+    {
+        return $this->watch;
+    }
+ 
+    public function addStopwatch($watch, $parameters=array())
+    {
+        $this->addDependency(self::DEP_WATCH, $watch, $parameters);
+    }
+    
 // ****************************************************************************************************    
 // Implementation of BaseObjectDependenciesInterfaces    
 // ****************************************************************************************************    

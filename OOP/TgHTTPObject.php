@@ -32,7 +32,7 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
 // ****************************************************************************************************
     
     /**
-    * Get Dafault Parameters of Object
+    * Get Default Parameters of Object
     * 
     * @param mixed $parameters
     */
@@ -71,8 +71,6 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
     
     protected function init()
     {
-        $this->hydrateObjParamsFromRequest();
-        
         parent::init();        
     }
     
@@ -100,6 +98,9 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
         if (!$this->request) { $this->request = Request::createFromGlobals(); }
 
         // From here request is set
+        
+        $this->hydrateObjParamsFromRequest();
+        
         /*        
         if(array_key_exists('request_var', $dependencies)) {
             $request_var = $dependencies['request_var'];
