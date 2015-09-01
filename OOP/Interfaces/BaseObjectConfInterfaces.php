@@ -21,6 +21,8 @@ interface BaseObjectConfInterfaces extends BaseObjectInterfaces
     
     public function getObjParams($parameters=array());
     public function getObjParam($path, $default = null, $deep = true, $sep = '/', $deepLevel = 0); 
+    
+    public function setObjParams($parameters=array());
     public function addObjParams($parameters=array());    
     
 }

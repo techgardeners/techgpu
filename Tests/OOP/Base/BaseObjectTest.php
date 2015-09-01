@@ -24,23 +24,6 @@ class BaseObjectTest extends \PHPUnit_Framework_TestCase
         return $getDefObjParams->invokeArgs($baseObj, array());
     }
     
-    protected function getDependenciesInfo()
-    {
-        $retArr = array();
-        
-        $dependencyInfo= array(
-                    'property' => 'request',
-                    'required' => true,        
-                    'default' => null,        
-                    'getdef_f' => null,        
-                    'init_f' => '_initRequest',        
-                    );
-
-       $retArr[BaseObject::DEP_REQUEST] = $dependencyInfo;
-       
-       return $retArr;
-        
-    }
     protected function getPersonalizedArrayParams()
     {        
             return array('config' => array('debug' => array(
@@ -91,27 +74,6 @@ class BaseObjectTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array_replace_recursive($defaultParameters, $this->getPersonalizedArrayParams()), $defWithPersParams);                
     }    
        
-    /**
-     * @covers TechG\TechGPU\OOP\Base\BaseObject::addDependencyInfo
-     */    
-    public function testAddDependencyInfo()
-    {
-        $depReq = $this->getDependenciesInfo();
-        
-        $obj = new BaseObject();
-        $obj->addDependencyInfo('request', $depReq);       
-        
-        $this->assertEquals($depReq, $obj->getDependenciesInfo('request'));
-    } 
-        
-    /**
-     * @covers TechG\TechGPU\OOP\Base\BaseObject::getDependenciesInfo
-     */    
-    public function testGetDependenciesInfo()
-    {
-
-        $this->testAddDependencyInfo();          
-    }  
    
     
 // *********************************************************************************************************************************************************    

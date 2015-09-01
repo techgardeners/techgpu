@@ -19,6 +19,6 @@ interface BaseObjectDbConnectedInterfaces extends BaseObjectInterfaces
 {  
     
     public function getConnection();
-    public function addConnection($connection);
+    public function setConnection($connection);
  
 }

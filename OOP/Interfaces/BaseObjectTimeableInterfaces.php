@@ -21,6 +21,6 @@ interface BaseObjectTimeableInterfaces extends BaseObjectInterfaces
     const DEP_WATCH = 'stopwatch';
     
     public function getStopwatch($parameters=array());
-    public function addStopwatch($watch, $parameters=array());    
+    public function setStopwatch($watch, $parameters=array());    
     
 }

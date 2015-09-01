@@ -21,7 +21,7 @@ interface BaseObjectRequestedInterfaces extends BaseObjectInterfaces
 {  
     
     public function getRequest();
-    public function addRequest(Request $request);
+    public function setRequest(Request $request, $hydrateParams=true);
  
     public function getObjParamsRequestMap();
  

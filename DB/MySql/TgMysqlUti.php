@@ -12,12 +12,15 @@ namespace TechG\TechGPU\DB\Mysql;
 
 use Symfony\Component\Stopwatch\Stopwatch;
 
-use TechG\TechGPU\Debug\Items\DbgInfoItem;
-use TechG\TechGPU\Debug\Items\DbgInfoArrayItem;
-use TechG\TechGPU\Debug\DbgInfoQuery;
+use TechG\TechGPU\DB\QueryResult;
 
 class TgMysqlUti
 {
+
+    public static function executeRawQuery($conn, $sql, $parameters = array())
+    {
+        return $conn->query($sql);
+    }
 
     /**
     * Metodo che esegue la query sql collezionando informazioni aggiuntive
@@ -27,114 +30,82 @@ class TgMysqlUti
     * @param mixed $sql
     * @param mixed $extendedInfo
     * @param mixed $parameters
-    * @return DbgInfoQuery
+    * @return
     */
-    public static function executeQuery($conn, $sql, &$extendedInfo = null, $parameters = array())
+    public static function executeQuery($conn, $sql, $parameters = array())
     {
         
-        // If not set, execeuted faster then possible
-        if ($extendedInfo === NULL) {
-            return $conn->query($sql);    
+        // If Set parameter 'only_data' no return debug info
+        if (array_key_exists('only_data', $parameters) && $parameters['only_data']) {
+            return self::executeRawQuery($conn, $sql);
         }
-        
+
         $stopwatch = new Stopwatch();
         $stopwatch->start('executeQuery');
 
-            $resultQ = $conn->query($sql);
-        
-        $timeEvent = $stopwatch->stop('executeQuery');
-        
-        $extendedInfo = new DbgInfoQuery($sql, $timeEvent, $conn, $resultQ);
-        
-        return $resultQ;
-    }    
+            $resData = self::executeRawQuery($conn, $sql, $parameters);
+
+        $qr = new QueryResult($conn, $sql, $resData);
+        $qr->addTimeEventInfo($timeEvent = $stopwatch->stop('executeQuery'));
+
+        return $qr;
+    }
     
     
-    public static function executePaginatedQuery($conn, $sql, $page_size = null, $page = 1, $filterClauses = null, $orderClauses = null, &$extendedInfo = null, $parameters = array())
+    public static function executePaginatedQuery($conn, $sql, $page = 1, $page_size = null, $filterClauses = null, $orderClauses = null, $parameters = array())
     {
 
         $stopwatch = new Stopwatch();
         $stopwatch->start('executePaginatedQuery');
         
         // Compongo sql con limiti filtri e ordinamenti
-
         $limitClause = self::getPaginatedLimitClause($page_size, $page);         
         $filterClause = self::getFilterClause($filterClauses);         
         $orderClause = self::getOrderClause($orderClauses);         
         
         $mainQuery = $sql.$filterClause.$orderClause.$limitClause;
-        
-        $mainQRes = self::executeQuery($conn, $mainQuery, $extendedInfo, $parameters);
-        $returned_rows = ($mainQRes) ? $mainQRes->num_rows : 0;
 
-        // Aggiungo le info sulla paginazione
-        if ($extendedInfo) {
-            $extendedInfo->value['exec_info']->add('returned_rows', new DbgInfoItem('returned_rows', $returned_rows, DbgInfoItem::TYPE_NUMERIC));
-            $extendedInfo->value['exec_info']->add('page', new DbgInfoItem('page', ($returned_rows > 0) ? $page : 0, DbgInfoItem::TYPE_NUMERIC));
-            $extendedInfo->value['exec_info']->add('page_size', new DbgInfoItem('page_size', $page_size, DbgInfoItem::TYPE_NUMERIC));
-            $extendedInfo->value['exec_info']->add('page_size', new DbgInfoItem('page_size', $page_size, DbgInfoItem::TYPE_NUMERIC));
-        }
-        
-        
-        if ($mainQRes && $limitClause) {
+        // ----------------------------------------------------------------------
+
+        $queryResult = self::executeQuery($conn, $mainQuery, $parameters);
+        $queryResult->addPaginationInfo($page, $page_size);
+
+        $paginated_records = $queryResult->execInfos['returned_rows'];
+
+        // Se ho dei risultati e se li ho ottenuti limitando la query, ho bisogno di sapere
+        // quanti sono i record totali non limitati
+
+        if ($queryResult->hasresult() && $limitClause) {
             
-            $countQuery = preg_replace('/^SELECT .* FROM/i', 'SELECT count(*) FROM', $sql);
-            
+            // Conta il numero di risultati non limitati
+            $countQuery = preg_replace('/^SELECT .* FROM/i', 'SELECT count(*) as num FROM', $sql);
+
+            $tq_res = self::executeQuery($conn, $countQuery, $parameters);
+            $queryResult->addSubQuery('total_table_count', $tq_res);
+            $queryResult->execInfos['total_table_records'] = ($tq_res->hasresult()) ? $tq_res->data[0]['num'] : 0;
+
+            $paginated_records = $queryResult->execInfos['total_table_records'];
+            $queryResult->execInfos['filtered_records'] = $queryResult->execInfos['total_table_records'];
+
+            // se sono anche filtrati per prima cosa mi prendo il numero dei risultati totali FILTRATI
             if ($filterClause) {
-                $fq_info = ($extendedInfo) ? array() : null;
-                $fq_res = self::executeQuery($conn, $countQuery.$filterClause, $fq_info, $parameters);
-                
-                if ($fq_res) {
-                    $fq_res = $fq_res->fetch_array(MYSQL_NUM);
-                    $fq_res = $fq_res[0];
-                }
 
-                if ($extendedInfo) {
-                    $extendedInfo->addSubQuery('count_filter_record', $fq_info);
-                    $extendedInfo->value['exec_info']->add('filtered_records', new DbgInfoItem('filtered_records', $fq_res , DbgInfoItem::TYPE_NUMERIC));    
-                }                
-                
+                $fq_res = self::executeQuery($conn, $countQuery.$filterClause, $parameters);
+                $queryResult->addSubQuery('filtered_count', $fq_res);
+                $queryResult->execInfos['filtered_records'] = ($fq_res->hasresult()) ? $fq_res->data[0]['num'] : 0;
+
+                $paginated_records = $queryResult->execInfos['filtered_records'];
             }
-
-            $tq_info = ($extendedInfo) ? array() : null;
-            $tq_res = self::executeQuery($conn, $countQuery, $tq_info, $parameters);
-            
-            if ($tq_res) {
-                $tq_res = $tq_res->fetch_array(MYSQL_NUM);
-                $tq_res = $tq_res[0];
-            }
-
-            $paginated_records = (($filterClause) ? $fq_res : $tq_res);
-            
-            if ($extendedInfo) {
-                $extendedInfo->addSubQuery('count_total_record', $tq_info);
-                $extendedInfo->value['exec_info']->add('total_table_records', new DbgInfoItem('total_table_records', $tq_res , DbgInfoItem::TYPE_NUMERIC));    
-            }
-                        
-            
-        } else {
-
-            $paginated_records = $returned_rows;
-
-            if ($extendedInfo) {
-                $extendedInfo->value['exec_info']->add('total_table_records', new DbgInfoItem('total_table_records', $returned_rows , DbgInfoItem::TYPE_NUMERIC));    
-            }             
 
         }
         
         $tot_page = ($page_size) ? ((int)($paginated_records / $page_size)) + (($paginated_records % $page_size > 0) ? 1 : 0) : 1;
-        
-        if ($extendedInfo) {
-            $extendedInfo->value['exec_info']->add('tot_page', new DbgInfoItem('page_size', $tot_page, DbgInfoItem::TYPE_NUMERIC));
-        }
 
-        
-       $event = $stopwatch->stop('executePaginatedQuery');
-       
-       $extendedInfo->addTimeEventInfo($event);
+        $queryResult->execInfos['tot_page'] = $tot_page;
+
+        $queryResult->addTotalTimeEventInfo($stopwatch->stop('executePaginatedQuery'));
           
-       return $mainQRes;            
-        
+        return $queryResult;
     }
     
     

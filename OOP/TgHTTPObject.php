@@ -20,11 +20,14 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
 {  
         
     protected $request;
-    public $conn;        
+    protected $conn;        
    
-    function __construct($parameters=array(), $dependencies=array())
-    {        
-        parent::__construct($parameters, $dependencies);
+    function __construct(Request $request = null, $conn = null, $parameters = array())
+    {                
+        $this->request = $request;
+        $this->conn = $conn;
+
+        parent::__construct($parameters);
     }    
     
 // ****************************************************************************************************    
@@ -46,33 +49,15 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
                          );
                                    
         return array_replace_recursive(parent::getDefObjParams(), $defParams, $parameters);            
-    }        
-    
-    protected function buildDependenciesInfo()
-    {        
-        parent::buildDependenciesInfo();
-        
-
-        $this->addDependencyInfo(self::DEP_REQUEST, array(
-                                                        self::DP_INFO_PROPERTY => 'request',
-                                                        self::DP_INFO_REQUIRED => true,  
-                                                        self::DP_INFO_CLASS => 'Symfony\Component\HttpFoundation\Request',
-                                                        self::DP_INFO_INIT_FUNC => '_initRequest',
-                                                        ));
-
-        $this->addDependencyInfo(self::DEP_CONN, array(
-                                                        self::DP_INFO_PROPERTY => 'conn',
-                                                        self::DP_INFO_REQUIRED => false,        
-                                                        self::DP_INFO_INIT_FUNC => '_initConnection',
-                                                        ));
-
-
-    }      
+    }            
     
     protected function init()
     {
-        parent::init();        
-    }
+        parent::init();    
+        
+        $this->_initRequest();
+        $this->_initConnection();            
+    }  
     
 // ****************************************************************************************************    
 // Methods for childrens overrides
@@ -91,34 +76,15 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
 // Init functions   
 // ****************************************************************************************************
             
-    protected function _initRequest($request=null, $parameters=array())
+    protected function _initRequest()
     {
-        
-        if ($request) { $this->request = $request; }
         if (!$this->request) { $this->request = Request::createFromGlobals(); }
-
-        // From here request is set
         
         $this->hydrateObjParamsFromRequest();
-        
-        /*        
-        if(array_key_exists('request_var', $dependencies)) {
-            $request_var = $dependencies['request_var'];
-            
-            if(array_key_exists('_get', $request_var)) { $this->request->query->replace($request_var['_get']); }                
-            if(array_key_exists('_post', $request_var)) { $this->request->request->replace($request_var['_get']); }                
-            if(array_key_exists('_files', $request_var)) { $this->request->files->replace($request_var['_files']); }                
-            if(array_key_exists('_cookie', $request_var)) { $this->request->cookies->replace($request_var['_cookie']); }                
-            if(array_key_exists('_server', $request_var)) { $this->request->server->replace($request_var['_server']); }                
-        
-        } 
-        */       
     }                
 
-    protected function _initConnection($conn=null, $parameters=array())
+    protected function _initConnection()
     {
-        
-        if ($conn) { $this->conn = $conn; }
         
     }        
     
@@ -131,9 +97,14 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
         return $this->request;
     }
  
-    public function addRequest(Request $request)
+    public function setRequest(Request $request, $hydrateParams=true)
     {
-        $this->addDependency(self::DEP_REQUEST, $request);
+        $this->request = $request;
+        
+        if ($hydrateParams) {
+            $this->hydrateObjParamsFromRequest();            
+        }
+            
     }
  
     protected function hydrateObjParamsFromRequest()
@@ -149,12 +120,12 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
         
         foreach ($paramToSync as $param => $paramPath) {
             
-            if ($value = $request->query->get($param)) {
+            if (($value = $request->query->get($param)) != NULL) {
                 
                 $this->objParams->set($paramPath, $value);
             } 
             
-            if ($value = $request->request->get($param)) {
+            if (($value = $request->request->get($param)) != NULL) {
                 $this->objParams->set($paramPath, $value);    
             }
         }
@@ -170,9 +141,9 @@ class TgHTTPObject extends BaseObject implements BaseObjectRequestedInterfaces, 
         return $this->conn;
     }
  
-    public function addConnection($connection)
+    public function setConnection($connection)
     {
-        $this->addDependency(self::DEP_CONN, $connection);
+        $this->conn = $connection;
     }
  
  

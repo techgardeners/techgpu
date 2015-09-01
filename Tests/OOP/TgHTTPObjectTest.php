@@ -50,23 +50,23 @@ class TgHTTPObjectTest extends \PHPUnit_Framework_TestCase
         $modifiedRequest = Request::createFromGlobals();
         $modifiedRequest->query->set('testparam','testvalue');
         
-        $tgHttpObj = new TgHTTPObject(array(), array($tgHttpObj::DEP_REQUEST => $modifiedRequest));
+        $tgHttpObj = new TgHTTPObject($modifiedRequest);
         $this->assertNotEquals($request, $tgHttpObj->getRequest());
         $this->assertEquals($modifiedRequest, $tgHttpObj->getRequest());
                 
     }    
     
     /**
-     * @covers TechG\TechGPU\OOP\TgHTTPObject::addRequest
+     * @covers TechG\TechGPU\OOP\TgHTTPObject::setRequest
      */
-    public function testAddRequest()
+    public function testSetRequest()
     {
         $request = Request::createFromGlobals();
         $modifiedRequest = Request::createFromGlobals();
         $modifiedRequest->query->set('testparam','testvalue');
         
         $tgHttpObj = new TgHTTPObject();
-        $tgHttpObj->addRequest($modifiedRequest);
+        $tgHttpObj->setRequest($modifiedRequest);
         $this->assertNotEquals($request, $tgHttpObj->getRequest());
         $this->assertEquals($modifiedRequest, $tgHttpObj->getRequest());
                 
@@ -84,7 +84,7 @@ class TgHTTPObjectTest extends \PHPUnit_Framework_TestCase
             $request->query->set($reqParam,'testvalue');    
         }
         
-        $tgHttpObj = new TgHTTPObject(array(), array(TgHTTPObject::DEP_REQUEST => $request));
+        $tgHttpObj = new TgHTTPObject($request);
         
         foreach ($paramsMap as $reqParam => $paramPath) {
             $this->assertEquals('testvalue', $tgHttpObj->getObjParam($paramPath));       
